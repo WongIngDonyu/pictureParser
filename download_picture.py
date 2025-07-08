@@ -8,7 +8,6 @@ from io import BytesIO
 from bd import Picture, Category, session, init_db
 from utils import generate_filename, safe_dir_name, get_random_headers
 
-
 def download_wallpaper(page_url):
     headers = get_random_headers()
     resp = requests.get(page_url, headers=headers)
@@ -54,7 +53,7 @@ def download_wallpaper(page_url):
         width=width,
         height=height,
         url=image_url,
-        fileName=full_path
+        fileName=filename
     )
     session.add(picture)
     session.commit()
