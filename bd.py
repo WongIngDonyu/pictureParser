@@ -1,9 +1,11 @@
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
-from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from sqlalchemy.orm import declarative_base, relationship, scoped_session,sessionmaker
+
 
 Base = declarative_base()
-engine = create_engine('sqlite:///pictures.db', echo=True)
-Session = sessionmaker(bind=engine)
+engine = create_engine("sqlite:///pictures.db", connect_args={"check_same_thread": False})
+SessionFactory = sessionmaker(bind=engine)
+Session = scoped_session(SessionFactory)
 session = Session()
 
 class Category(Base):
