@@ -1,4 +1,6 @@
 import os
+import time
+from http.client import IncompleteRead
 
 import requests
 from bs4 import BeautifulSoup
@@ -16,6 +18,21 @@ def download_wallpaper(page_url):
         resp = requests.get(page_url, headers=headers)
         soup = BeautifulSoup(resp.text, "html.parser")
 
+        download_url = page_url.rstrip("/") + "/original/download"
+
+        for attempt in range(3):
+            try:
+                image_resp = requests.get(download_url, headers=headers, allow_redirects=True, timeout=15)
+                image_resp.raise_for_status()
+                image = Image.open(BytesIO(image_resp.content))
+                image_url = image_resp.url
+                break
+            except IncompleteRead as e:
+                print(f"[!] Попытка {attempt + 1}: IncompleteRead — {e}")
+                if attempt == 2:
+                    raise
+                time.sleep(1)
+
         name_tag = soup.find("h1")
         name = name_tag.text.strip() if name_tag else "Unnamed"
         existing = session.query(Picture).filter_by(name=name).first()
@@ -24,7 +41,7 @@ def download_wallpaper(page_url):
             return
 
         parts = page_url.split("/")
-        category_name = parts[6] if len(parts) > 6 else "Uncategorized"
+        category_name = parts[5] if len(parts) > 5 else "Uncategorized"
         safe_category = safe_dir_name(category_name)
         dir_path = os.path.join("pictures", safe_category)
         os.makedirs(dir_path, exist_ok=True)
@@ -44,18 +61,10 @@ def download_wallpaper(page_url):
             res_text = resolution_tag.split(":")[1].strip()
             width, height = [int(x.strip()) for x in res_text.split("x")]
         else:
-            width, height = 0, 0
+            width, height = image.size
 
         tag_div = soup.find("div", class_="wallpaper-tags")
         tags = ", ".join([a.get_text(strip=True) for a in tag_div.find_all("a")]) if tag_div else ""
-
-        download_url = page_url.rstrip("/") + "/original/download"
-        image_resp = requests.get(download_url, headers=headers, allow_redirects=True)
-        image_url = image_resp.url
-        image = Image.open(BytesIO(image_resp.content))
-
-        if width == 0 or height == 0:
-            width, height = image.size
 
         filename = generate_filename(name)
         full_path = os.path.join(dir_path, filename)

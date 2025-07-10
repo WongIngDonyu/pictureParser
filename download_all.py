@@ -9,12 +9,17 @@ from bd import init_db
 from download_picture import download_wallpaper
 from utils import get_random_headers
 
+USE_MAX_PAGES = False
+MAX_PAGES = 5
+
 page_counter = 1
 page_lock = Lock()
 
 def get_next_page():
     global page_counter
     with page_lock:
+        if USE_MAX_PAGES and page_counter > MAX_PAGES:
+            return None
         current = page_counter
         page_counter += 1
     return current
@@ -22,6 +27,8 @@ def get_next_page():
 def process_pages_thread(base_url, thread_id):
     while True:
         page = get_next_page()
+        if page is None:
+            break
         page_url = f"{base_url}/ru?page={page}"
         print(f"[Поток {thread_id}] Обработка страницы {page_url}")
         try:

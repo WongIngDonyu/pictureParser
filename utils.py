@@ -1,3 +1,4 @@
+import random
 import re
 import hashlib
 
@@ -17,8 +18,17 @@ def safe_dir_name(name):
 
 ua = UserAgent()
 
+desktop_browsers = [
+    ua.chrome,
+    ua.firefox,
+    ua.safari,
+    ua.edge,
+    ua.opera
+]
+
 def get_random_headers():
     try:
-        return {"User-Agent": ua.random}
+        user_agent = random.choice(desktop_browsers)
+        return {"User-Agent": user_agent}
     except:
-        return {"User-Agent": "Mozilla/5.0"}  # fallback
+        return {"User-Agent": "Mozilla/5.0"}
