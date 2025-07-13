@@ -5,12 +5,13 @@ from threading import Lock, Thread
 import requests
 from bs4 import BeautifulSoup
 
-from bd import init_db
+from bd import init_db, Session, Picture
+from cache import existing_urls
 from download_picture import download_wallpaper
 from utils import get_random_headers
 
 USE_MAX_PAGES = False
-MAX_PAGES = 5
+MAX_PAGES = 3
 
 page_counter = 1
 page_lock = Lock()
@@ -30,7 +31,7 @@ def process_pages_thread(base_url, thread_id):
         page = get_next_page()
         if page is None:
             break
-        page_url = f"{base_url}/ru?page={page}"
+        page_url = f"{base_url}?page={page}"
         print(f"[Поток {thread_id}] Обработка страницы {page_url}")
         try:
             resp = requests.get(page_url, headers=get_random_headers(), timeout=10)
@@ -46,7 +47,7 @@ def process_pages_thread(base_url, thread_id):
             for fig in figures:
                 a_tag = fig.find("a")
                 if a_tag and a_tag.get("href"):
-                    wallpaper_url = urljoin(base_url, a_tag["href"])
+                    wallpaper_url = urljoin("https://wallscloud.net", a_tag["href"])
                     try:
                         download_wallpaper(wallpaper_url)
                     except Exception as e:
@@ -57,7 +58,7 @@ def process_pages_thread(base_url, thread_id):
             break
 
 def download_all_multithreaded(num_threads):
-    base_url = "https://wallscloud.net"
+    base_url = "https://wallscloud.net/ru/wallpapers/latest"
     threads = []
 
     for i in range(num_threads):
@@ -72,6 +73,12 @@ def download_all_multithreaded(num_threads):
 
 if __name__ == "__main__":
     init_db()
+    print("Загрузка уже скачанных URL из базы...")
+    session = Session()
+    existing_urls.update(url for (url,) in session.query(Picture.url).all())
+    session.close()
+    print(f"Загружено {len(existing_urls)} URL.")
+
     try:
         num_threads = int(input("Введите количество потоков: "))
         if num_threads < 1:
