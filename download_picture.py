@@ -101,7 +101,7 @@ def download_wallpaper(page_url):
         tag_div = soup.find("div", class_="wallpaper-tags")
         tags = ", ".join([a.get_text(strip=True) for a in tag_div.find_all("a")]) if tag_div else ""
 
-        filename = generate_filename(name)
+        filename = generate_filename(name, image_url)
         full_path = os.path.join(dir_path, filename)
         with open(full_path, "wb") as f:
             f.write(image_resp.content)

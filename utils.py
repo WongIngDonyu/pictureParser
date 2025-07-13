@@ -5,11 +5,12 @@ import hashlib
 from fake_useragent import UserAgent
 from transliterate import translit
 
-def generate_filename(name):
+
+def generate_filename(name, url):
     name_translit = translit(name, 'ru', reversed=True)
     name_clean = re.sub(r'[^a-zA-Z0-9_-]', '_', name_translit)
     name_clean = re.sub(r'_+', '_', name_clean).strip("_")
-    short_hash = hashlib.md5(name.encode('utf-8')).hexdigest()[:6]
+    short_hash = hashlib.md5(url.encode('utf-8')).hexdigest()[:6]
     return f"{name_clean}_{short_hash}.jpg"
 
 def safe_dir_name(name):
