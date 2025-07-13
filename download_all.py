@@ -9,7 +9,7 @@ from bd import init_db
 from download_picture import download_wallpaper
 from utils import get_random_headers
 
-USE_MAX_PAGES = False
+USE_MAX_PAGES = True
 MAX_PAGES = 5
 
 page_counter = 1
@@ -24,6 +24,7 @@ def get_next_page():
         page_counter += 1
     return current
 
+
 def process_pages_thread(base_url, thread_id):
     while True:
         page = get_next_page()
@@ -34,14 +35,18 @@ def process_pages_thread(base_url, thread_id):
         try:
             resp = requests.get(page_url, headers=get_random_headers(), timeout=10)
             soup = BeautifulSoup(resp.text, "html.parser")
-            wallpaper_links = soup.select("a.wall_link")
-            if not wallpaper_links:
-                print(f"[Поток {thread_id}] Ссылок нет. Завершаю.")
+
+            figures = soup.select("div.grid-row.walls_data figure")
+            if not figures:
+                print(f"[Поток {thread_id}] Нет <figure> тегов. Завершаю.")
                 break
-            for a_tag in wallpaper_links:
-                href = a_tag.get("href")
-                if href:
-                    wallpaper_url = urljoin(base_url, href)
+
+            print(f"[Поток {thread_id}] Найдено {len(figures)} обоев.")
+
+            for fig in figures:
+                a_tag = fig.find("a")
+                if a_tag and a_tag.get("href"):
+                    wallpaper_url = urljoin(base_url, a_tag["href"])
                     try:
                         download_wallpaper(wallpaper_url)
                     except Exception as e:

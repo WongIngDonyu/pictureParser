@@ -20,6 +20,8 @@ def download_wallpaper(page_url):
 
         download_url = page_url.rstrip("/") + "/original/download"
 
+        image = None
+        image_url = None
         for attempt in range(3):
             try:
                 image_resp = requests.get(download_url, headers=headers, allow_redirects=True, timeout=15)
@@ -32,6 +34,15 @@ def download_wallpaper(page_url):
                 if attempt == 2:
                     raise
                 time.sleep(1)
+            except Exception as e:
+                print(f"[!] Ошибка загрузки изображения: {e}")
+                if attempt == 2:
+                    raise
+                time.sleep(1)
+
+        if image is None:
+            print("[!] Не удалось загрузить изображение.")
+            return
 
         name_tag = soup.find("h1")
         name = name_tag.text.strip() if name_tag else "Unnamed"
