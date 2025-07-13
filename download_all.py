@@ -9,7 +9,7 @@ from bd import init_db
 from download_picture import download_wallpaper
 from utils import get_random_headers
 
-USE_MAX_PAGES = True
+USE_MAX_PAGES = False
 MAX_PAGES = 5
 
 page_counter = 1
